@@ -23,7 +23,7 @@ export const CheckoutModal = ({
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
   const [zoneId, setZoneId] = useState(CHILEAN_REGIONS[0].value);
-  const [paymentMethod, setPaymentMethod] = useState('DEBIT');
+  const [paymentMethod, setPaymentMethod] = useState('DEBITO');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
