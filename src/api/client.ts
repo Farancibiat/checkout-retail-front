@@ -4,8 +4,13 @@ import type {
   CheckoutResponse,
 } from '../types/api';
 
-const BASE_URL =
+const rawBaseUrl =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
+// Asegurar URL absoluta: si falta protocolo, el navegador la trata como ruta relativa al origen.
+const BASE_URL =
+  rawBaseUrl.startsWith('http://') || rawBaseUrl.startsWith('https://')
+    ? rawBaseUrl.replace(/\/$/, '') // quitar barra final si la tiene
+    : `https://${rawBaseUrl.replace(/^\//, '')}`;
 
 const fetchApi = async <T,>(
   path: string,

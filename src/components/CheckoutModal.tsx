@@ -49,7 +49,7 @@ export const CheckoutModal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-[rgba(0,48,135,0.4)] flex items-center justify-center z-[1000] p-4"
+      className="fixed inset-0 bg-[rgba(0,48,135,0.4)] flex items-center justify-center z-1000 p-4"
       role="dialog"
       aria-modal="true"
     >
