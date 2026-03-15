@@ -1,10 +1,19 @@
 import { Link } from 'react-router-dom';
-import type { CheckoutResponse } from '../types/api';
+import type {
+  CartItem,
+  CheckoutResponse,
+  ProductCatalogEntryDto,
+} from '../types/api';
 
 interface ReceiptViewProps {
   result: CheckoutResponse;
+  purchasedItems?: CartItem[];
+  products?: ProductCatalogEntryDto[];
   onClose: () => void;
 }
+
+const toPrice = (p: ProductCatalogEntryDto): number =>
+  typeof p.price === 'string' ? parseFloat(p.price) : p.price;
 
 const formatPrice = (n: number): string =>
   new Intl.NumberFormat('es-CL', {
@@ -14,18 +23,62 @@ const formatPrice = (n: number): string =>
     maximumFractionDigits: 0,
   }).format(n);
 
-export const ReceiptView = ({ result, onClose }: ReceiptViewProps) => (
-  <div className="w-full max-w-[520px] mx-auto p-6">
-    <div className="bg-walmart-white border-2 border-walmart-true-blue rounded-xl p-8 shadow-receipt">
-      <h1 className="m-0 mb-2 text-2xl text-walmart-bentonville-blue">
-        Boleta de compra
-      </h1>
-      <p className="m-0 mb-6 text-sm text-[#666]">Carrito: {result.cartId}</p>
+export const ReceiptView = ({
+  result,
+  purchasedItems = [],
+  products = [],
+  onClose,
+}: ReceiptViewProps) => {
+  const bySku = new Map(products.map((p) => [p.sku, p]));
 
-      <section className="mb-6">
-        <h2 className="m-0 mb-3 text-[1.1rem] text-walmart-bentonville-blue">
-          Resumen
-        </h2>
+  return (
+    <div className="w-full max-w-[520px] mx-auto p-6">
+      <div className="bg-walmart-white border-2 border-walmart-true-blue rounded-xl p-8 shadow-receipt">
+        <h1 className="m-0 mb-2 text-2xl text-walmart-bentonville-blue">
+          Boleta de compra
+        </h1>
+        <p className="m-0 mb-6 text-sm text-[#666]">Carrito: {result.cartId}</p>
+
+        {purchasedItems.length > 0 && products.length > 0 && (
+          <section className="mb-6">
+            <h2 className="m-0 mb-3 text-[1.1rem] text-walmart-bentonville-blue">
+              Detalle
+            </h2>
+            <ul className="list-none p-0 m-0 space-y-2">
+              {purchasedItems.map((item) => {
+                const product = bySku.get(item.sku);
+                if (!product) return null;
+                const priceVal = toPrice(product);
+                const hasDiscount =
+                  product.promotions && product.promotions.length > 0;
+                return (
+                  <li
+                    key={item.sku}
+                    className="flex justify-between items-baseline gap-2 py-1.5 border-b border-[#eee] last:border-0"
+                  >
+                    <span className="text-[#333]">
+                      {product.name} × {item.quantity}
+                    </span>
+                    <span
+                      className={
+                        hasDiscount
+                          ? 'line-through text-[#888]'
+                          : 'text-walmart-bentonville-blue'
+                      }
+                    >
+                      {formatPrice(priceVal * item.quantity)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        <section className="mb-6">
+          <h2 className="m-0 mb-3 text-[1.1rem] text-walmart-bentonville-blue">
+            Resumen
+          </h2>
         <div className="flex justify-between py-1.5">
           <span>Subtotal</span>
           <span>{formatPrice(result.subtotal)}</span>
@@ -83,4 +136,5 @@ export const ReceiptView = ({ result, onClose }: ReceiptViewProps) => (
       </div>
     </div>
   </div>
-);
+  );
+};

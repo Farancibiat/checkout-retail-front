@@ -9,7 +9,11 @@ import { Cart } from '../components/Cart';
 import { CartSidebar } from '../components/CartSidebar';
 import { CheckoutModal } from '../components/CheckoutModal';
 import { ReceiptView } from '../components/ReceiptView';
-import type { CheckoutResponse, ProductCatalogEntryDto } from '../types/api';
+import type {
+  CartItem,
+  CheckoutResponse,
+  ProductCatalogEntryDto,
+} from '../types/api';
 
 const CART_ID = 'cart-retail-1';
 
@@ -22,6 +26,10 @@ export const CartPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [checkoutResult, setCheckoutResult] =
     useState<CheckoutResponse | null>(null);
+  const [receiptItems, setReceiptItems] = useState<CartItem[]>([]);
+  const [receiptProducts, setReceiptProducts] = useState<
+    ProductCatalogEntryDto[]
+  >([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +51,8 @@ export const CartPage = () => {
   const subtotal = getSubtotal(products);
 
   const handleCheckoutSuccess = (result: CheckoutResponse) => {
+    setReceiptItems([...items]);
+    setReceiptProducts([...products]);
     setCheckoutResult(result);
     setModalOpen(false);
     clearCart();
@@ -50,6 +60,8 @@ export const CartPage = () => {
 
   const handleCloseReceipt = () => {
     setCheckoutResult(null);
+    setReceiptItems([]);
+    setReceiptProducts([]);
   };
 
   if (loading) {
@@ -64,6 +76,8 @@ export const CartPage = () => {
     return (
       <ReceiptView
         result={checkoutResult}
+        purchasedItems={receiptItems}
+        products={receiptProducts}
         onClose={handleCloseReceipt}
       />
     );
