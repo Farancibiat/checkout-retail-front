@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  /* Walmart brand colors */
+  --color-walmart-true-blue: #0072ce;
+  --color-walmart-spark-yellow: #ffb81c;
+  --color-walmart-bentonville-blue: #003087;
+  --color-walmart-secondary-blue: #6cace4;
+  --color-walmart-white: #ffffff;
+  --color-yellow-hover: #e5a617;
+  --font-walmart: "Myriad Pro", "Myriad Web", system-ui, -apple-system, sans-serif;
+  --shadow-card: 0 2px 8px rgba(0, 48, 135, 0.08);
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --shadow-receipt: 0 4px 20px rgba(0, 48, 135, 0.15);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    @apply box-border;
+  }
+  body {
+    @apply m-0 min-h-screen font-walmart text-[#1a1a1a] bg-walmart-white;
+  }
+  #root {
+    @apply min-h-screen flex flex-col;
+  }
+  a {
+    @apply text-walmart-spark-yellow no-underline;
+  }
+  a:hover {
+    @apply underline;
+  }
+  button {
+    @apply font-[inherit] cursor-pointer;
+  }
+  input,
+  select {
+    @apply font-[inherit];
+  }
+}
