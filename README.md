@@ -2,9 +2,10 @@
 
 SPA del checkout retail: React 19, TypeScript, Vite 8 y Tailwind CSS 4. Consume la API del backend `checkout-retail` (catálogo y checkout) y usa Fake Store API para imágenes de productos. Diseño inspirado en la guía de marca Walmart.
 
-**Enlaces:** [Demo en vivo](https://walmart.farancibiat.cl) · [Repositorio del backend](https://github.com/Farancibiat/checkout-retail)
+## Demo
 
-
+- **Sitio en vivo:** [https://walmart.farancibiat.cl](https://walmart.farancibiat.cl) — aplicación desplegada para probar el flujo de compra sin levantar el proyecto en local.
+- **Repositorio del backend:** [checkout-retail](https://github.com/Farancibiat/checkout-retail)
 
 ## Uso rápido (solo frontend)
 

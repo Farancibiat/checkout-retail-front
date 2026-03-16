@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type {
   CartItem,
   CheckoutResponse,
+  DiscountAppliedDto,
   ProductCatalogEntryDto,
 } from '../types/api';
 
@@ -23,6 +24,24 @@ const formatPrice = (n: number): string =>
     maximumFractionDigits: 0,
   }).format(n);
 
+function getPromotionDiscountsForSku(
+  discounts: DiscountAppliedDto[],
+  sku: string
+): DiscountAppliedDto[] {
+  return discounts.filter(
+    (d) =>
+      d.type === 'PROMOTION' &&
+      (d.description.includes(`unidades de ${sku}`) || d.description.endsWith(` ${sku}`))
+  );
+}
+
+function hasPromotionDiscountForItem(
+  discounts: DiscountAppliedDto[],
+  sku: string
+): boolean {
+  return getPromotionDiscountsForSku(discounts, sku).length > 0;
+}
+
 export const ReceiptView = ({
   result,
   purchasedItems = [],
@@ -30,6 +49,16 @@ export const ReceiptView = ({
   onClose,
 }: ReceiptViewProps) => {
   const bySku = new Map(products.map((p) => [p.sku, p]));
+  const promotionDiscounts = result.discounts.filter(
+    (d) => d.type === 'PROMOTION'
+  );
+  const paymentDiscounts = result.discounts.filter(
+    (d) => d.type === 'PAYMENT'
+  );
+  const totalPromotionAmount = promotionDiscounts.reduce(
+    (sum, d) => sum + d.amount,
+    0
+  );
 
   return (
     <div className="w-full max-w-[520px] mx-auto p-6">
@@ -44,30 +73,53 @@ export const ReceiptView = ({
             <h2 className="m-0 mb-3 text-[1.1rem] text-walmart-bentonville-blue">
               Detalle
             </h2>
-            <ul className="list-none p-0 m-0 space-y-2">
-              {purchasedItems.map((item) => {
+            <ul className="list-none p-0 m-0 space-y-3">
+              {purchasedItems.map((item, index) => {
                 const product = bySku.get(item.sku);
                 if (!product) return null;
                 const priceVal = toPrice(product);
-                const hasDiscount =
-                  product.promotions && product.promotions.length > 0;
+                const hasDiscount = hasPromotionDiscountForItem(
+                  result.discounts,
+                  item.sku
+                );
+                const itemPromotionDiscounts = getPromotionDiscountsForSku(
+                  result.discounts,
+                  item.sku
+                );
                 return (
                   <li
-                    key={item.sku}
-                    className="flex justify-between items-baseline gap-2 py-1.5 border-b border-[#eee] last:border-0"
+                    key={`${item.sku}-${index}`}
+                    className="border-b border-[#eee] last:border-0 pb-2 last:pb-0"
                   >
-                    <span className="text-[#333]">
-                      {product.name} × {item.quantity}
-                    </span>
-                    <span
-                      className={
-                        hasDiscount
-                          ? 'line-through text-[#888]'
-                          : 'text-walmart-bentonville-blue'
-                      }
-                    >
-                      {formatPrice(priceVal * item.quantity)}
-                    </span>
+                    <div className="flex justify-between items-baseline gap-2 py-1">
+                      <span className="text-[#333]">
+                        {product.name} × {item.quantity}
+                      </span>
+                      <span
+                        className={
+                          hasDiscount
+                            ? 'line-through text-[#888]'
+                            : 'text-walmart-bentonville-blue'
+                        }
+                      >
+                        {formatPrice(priceVal * item.quantity)}
+                      </span>
+                    </div>
+                    {itemPromotionDiscounts.length > 0 && (
+                      <ul className="list-none p-0 m-0 pl-3 mt-0.5 text-sm">
+                        {itemPromotionDiscounts.map((d, i) => (
+                          <li
+                            key={`${item.sku}-${index}-${i}`}
+                            className="flex justify-between text-[#555]"
+                          >
+                            <span>{d.description}</span>
+                            <span className="text-[#0a0]">
+                              −{formatPrice(d.amount)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 );
               })}
@@ -79,30 +131,36 @@ export const ReceiptView = ({
           <h2 className="m-0 mb-3 text-[1.1rem] text-walmart-bentonville-blue">
             Resumen
           </h2>
-        <div className="flex justify-between py-1.5">
-          <span>Subtotal</span>
-          <span>{formatPrice(result.subtotal)}</span>
-        </div>
-        {result.discounts.length > 0 && (
-          <>
-            <h3 className="mt-3 mb-1.5 text-[0.95rem] text-[#555]">
-              Descuentos
-            </h3>
-            <ul className="list-none p-0 m-0">
-              {result.discounts.map((d, i) => (
-                <li key={i} className="flex justify-between py-1 text-sm">
-                  <span className="text-[#555]">{d.description}</span>
-                  <span className="text-[#0a0]">−{formatPrice(d.amount)}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-        <div className="mt-3 pt-3 border-t-2 border-walmart-spark-yellow flex justify-between text-[1.15rem] text-walmart-bentonville-blue">
-          <strong>Total</strong>
-          <strong>{formatPrice(result.total)}</strong>
-        </div>
-      </section>
+          <div className="flex justify-between py-1.5">
+            <span>Subtotal</span>
+            <span>{formatPrice(result.subtotal)}</span>
+          </div>
+          {totalPromotionAmount > 0 && (
+            <div className="flex justify-between py-1.5 text-sm">
+              <span>Total descuentos por productos</span>
+              <span className="text-[#0a0]">
+                −{formatPrice(totalPromotionAmount)}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between py-1.5">
+            <span>Costo de envío</span>
+            <span>{formatPrice(0)}</span>
+          </div>
+          {paymentDiscounts.map((d, i) => (
+            <div
+              key={i}
+              className="flex justify-between py-1 text-sm text-[#555]"
+            >
+              <span>{d.description}</span>
+              <span className="text-[#0a0]">−{formatPrice(d.amount)}</span>
+            </div>
+          ))}
+          <div className="mt-3 pt-3 border-t-2 border-walmart-spark-yellow flex justify-between text-[1.15rem] text-walmart-bentonville-blue">
+            <strong>Total</strong>
+            <strong>{formatPrice(result.total)}</strong>
+          </div>
+        </section>
 
       <section className="mb-6">
         <h2 className="m-0 mb-3 text-[1.1rem] text-walmart-bentonville-blue">
