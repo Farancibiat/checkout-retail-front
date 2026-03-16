@@ -36,6 +36,7 @@ export interface DiscountAppliedDto {
   type: string;
   description: string;
   amount: number;
+  sku?: string;
 }
 
 export interface PaymentConfirmationDto {

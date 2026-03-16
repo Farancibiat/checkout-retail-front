@@ -31,9 +31,24 @@ export const ReceiptView = ({
 }: ReceiptViewProps) => {
   const bySku = new Map(products.map((p) => [p.sku, p]));
   const discounts = Array.isArray(result.discounts) ? result.discounts : [];
+  const promotionDiscounts = discounts.filter(
+    (d) => (d.type || '').toUpperCase() === 'PROMOTION'
+  );
   const paymentDiscounts = discounts.filter(
     (d) => (d.type || '').toUpperCase() === 'PAYMENT'
   );
+  const totalPromotionAmount = promotionDiscounts.reduce(
+    (sum, d) => sum + (Number(d.amount) || 0),
+    0
+  );
+
+  function getPromotionDiscountsForItem(sku: string) {
+    return promotionDiscounts.filter(
+      (d) =>
+        d.sku === sku ||
+        (!d.sku && (d.description || '').includes(`unidades de ${sku}`))
+    );
+  }
 
   return (
     <div className="w-full max-w-[520px] mx-auto p-6">
@@ -53,8 +68,10 @@ export const ReceiptView = ({
                 const product = bySku.get(item.sku);
                 if (!product) return null;
                 const priceVal = toPrice(product);
-                const productPromotions = product.promotions ?? [];
-                const hasDiscount = productPromotions.length > 0;
+                const itemPromotionDiscounts = getPromotionDiscountsForItem(
+                  item.sku
+                );
+                const hasDiscount = itemPromotionDiscounts.length > 0;
                 return (
                   <li
                     key={`${item.sku}-${index}`}
@@ -74,11 +91,17 @@ export const ReceiptView = ({
                         {formatPrice(priceVal * item.quantity)}
                       </span>
                     </div>
-                    {productPromotions.length > 0 && (
-                      <ul className="list-none p-0 m-0 pl-3 mt-0.5 text-sm text-[#555]">
-                        {productPromotions.map((promo, i) => (
-                          <li key={`${item.sku}-${index}-${i}`}>
-                            {promo.description}
+                    {itemPromotionDiscounts.length > 0 && (
+                      <ul className="list-none p-0 m-0 pl-3 mt-0.5 text-sm">
+                        {itemPromotionDiscounts.map((d, i) => (
+                          <li
+                            key={`${item.sku}-${index}-${i}`}
+                            className="flex justify-between text-[#555]"
+                          >
+                            <span>{d.description}</span>
+                            <span className="text-[#0a0]">
+                              −{formatPrice(d.amount)}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -98,6 +121,14 @@ export const ReceiptView = ({
             <span>Subtotal</span>
             <span>{formatPrice(result.subtotal)}</span>
           </div>
+          {totalPromotionAmount > 0 && (
+            <div className="flex justify-between py-1.5 text-sm">
+              <span>Total descuentos por productos</span>
+              <span className="text-[#0a0]">
+                −{formatPrice(totalPromotionAmount)}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between py-1.5">
             <span>Costo de envío</span>
             <span>{formatPrice(0)}</span>
