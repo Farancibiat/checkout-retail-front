@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import type {
   CartItem,
   CheckoutResponse,
-  DiscountAppliedDto,
   ProductCatalogEntryDto,
 } from '../types/api';
 
@@ -24,35 +23,6 @@ const formatPrice = (n: number): string =>
     maximumFractionDigits: 0,
   }).format(n);
 
-function isPromotionDiscount(d: DiscountAppliedDto): boolean {
-  return (d.type || '').toUpperCase() === 'PROMOTION';
-}
-
-function discountAppliesToSku(d: DiscountAppliedDto, sku: string): boolean {
-  const desc = d.description || '';
-  return (
-    desc.endsWith(`unidades de ${sku}`) ||
-    desc.includes(`unidades de ${sku}`)
-  );
-}
-
-function getPromotionDiscountsForSku(
-  discounts: DiscountAppliedDto[],
-  sku: string
-): DiscountAppliedDto[] {
-  const list = Array.isArray(discounts) ? discounts : [];
-  return list.filter(
-    (d) => isPromotionDiscount(d) && discountAppliesToSku(d, sku)
-  );
-}
-
-function hasPromotionDiscountForItem(
-  discounts: DiscountAppliedDto[],
-  sku: string
-): boolean {
-  return getPromotionDiscountsForSku(discounts, sku).length > 0;
-}
-
 export const ReceiptView = ({
   result,
   purchasedItems = [],
@@ -61,13 +31,8 @@ export const ReceiptView = ({
 }: ReceiptViewProps) => {
   const bySku = new Map(products.map((p) => [p.sku, p]));
   const discounts = Array.isArray(result.discounts) ? result.discounts : [];
-  const promotionDiscounts = discounts.filter((d) => isPromotionDiscount(d));
   const paymentDiscounts = discounts.filter(
     (d) => (d.type || '').toUpperCase() === 'PAYMENT'
-  );
-  const totalPromotionAmount = promotionDiscounts.reduce(
-    (sum, d) => sum + (Number(d.amount) || 0),
-    0
   );
 
   return (
@@ -88,14 +53,8 @@ export const ReceiptView = ({
                 const product = bySku.get(item.sku);
                 if (!product) return null;
                 const priceVal = toPrice(product);
-                const hasDiscount = hasPromotionDiscountForItem(
-                  discounts,
-                  item.sku
-                );
-                const itemPromotionDiscounts = getPromotionDiscountsForSku(
-                  discounts,
-                  item.sku
-                );
+                const productPromotions = product.promotions ?? [];
+                const hasDiscount = productPromotions.length > 0;
                 return (
                   <li
                     key={`${item.sku}-${index}`}
@@ -115,17 +74,11 @@ export const ReceiptView = ({
                         {formatPrice(priceVal * item.quantity)}
                       </span>
                     </div>
-                    {itemPromotionDiscounts.length > 0 && (
-                      <ul className="list-none p-0 m-0 pl-3 mt-0.5 text-sm">
-                        {itemPromotionDiscounts.map((d, i) => (
-                          <li
-                            key={`${item.sku}-${index}-${i}`}
-                            className="flex justify-between text-[#555]"
-                          >
-                            <span>{d.description}</span>
-                            <span className="text-[#0a0]">
-                              −{formatPrice(d.amount)}
-                            </span>
+                    {productPromotions.length > 0 && (
+                      <ul className="list-none p-0 m-0 pl-3 mt-0.5 text-sm text-[#555]">
+                        {productPromotions.map((promo, i) => (
+                          <li key={`${item.sku}-${index}-${i}`}>
+                            {promo.description}
                           </li>
                         ))}
                       </ul>
@@ -144,12 +97,6 @@ export const ReceiptView = ({
           <div className="flex justify-between py-1.5">
             <span>Subtotal</span>
             <span>{formatPrice(result.subtotal)}</span>
-          </div>
-          <div className="flex justify-between py-1.5 text-sm">
-            <span>Total descuentos por productos</span>
-            <span className="text-[#0a0]">
-              −{formatPrice(totalPromotionAmount)}
-            </span>
           </div>
           <div className="flex justify-between py-1.5">
             <span>Costo de envío</span>
