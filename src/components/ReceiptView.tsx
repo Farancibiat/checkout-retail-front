@@ -24,14 +24,25 @@ const formatPrice = (n: number): string =>
     maximumFractionDigits: 0,
   }).format(n);
 
+function isPromotionDiscount(d: DiscountAppliedDto): boolean {
+  return (d.type || '').toUpperCase() === 'PROMOTION';
+}
+
+function discountAppliesToSku(d: DiscountAppliedDto, sku: string): boolean {
+  const desc = d.description || '';
+  return (
+    desc.endsWith(`unidades de ${sku}`) ||
+    desc.includes(`unidades de ${sku}`)
+  );
+}
+
 function getPromotionDiscountsForSku(
   discounts: DiscountAppliedDto[],
   sku: string
 ): DiscountAppliedDto[] {
-  return discounts.filter(
-    (d) =>
-      d.type === 'PROMOTION' &&
-      (d.description.includes(`unidades de ${sku}`) || d.description.endsWith(` ${sku}`))
+  const list = Array.isArray(discounts) ? discounts : [];
+  return list.filter(
+    (d) => isPromotionDiscount(d) && discountAppliesToSku(d, sku)
   );
 }
 
@@ -49,14 +60,13 @@ export const ReceiptView = ({
   onClose,
 }: ReceiptViewProps) => {
   const bySku = new Map(products.map((p) => [p.sku, p]));
-  const promotionDiscounts = result.discounts.filter(
-    (d) => d.type === 'PROMOTION'
-  );
-  const paymentDiscounts = result.discounts.filter(
-    (d) => d.type === 'PAYMENT'
+  const discounts = Array.isArray(result.discounts) ? result.discounts : [];
+  const promotionDiscounts = discounts.filter((d) => isPromotionDiscount(d));
+  const paymentDiscounts = discounts.filter(
+    (d) => (d.type || '').toUpperCase() === 'PAYMENT'
   );
   const totalPromotionAmount = promotionDiscounts.reduce(
-    (sum, d) => sum + d.amount,
+    (sum, d) => sum + (Number(d.amount) || 0),
     0
   );
 
@@ -79,11 +89,11 @@ export const ReceiptView = ({
                 if (!product) return null;
                 const priceVal = toPrice(product);
                 const hasDiscount = hasPromotionDiscountForItem(
-                  result.discounts,
+                  discounts,
                   item.sku
                 );
                 const itemPromotionDiscounts = getPromotionDiscountsForSku(
-                  result.discounts,
+                  discounts,
                   item.sku
                 );
                 return (
@@ -135,14 +145,12 @@ export const ReceiptView = ({
             <span>Subtotal</span>
             <span>{formatPrice(result.subtotal)}</span>
           </div>
-          {totalPromotionAmount > 0 && (
-            <div className="flex justify-between py-1.5 text-sm">
-              <span>Total descuentos por productos</span>
-              <span className="text-[#0a0]">
-                −{formatPrice(totalPromotionAmount)}
-              </span>
-            </div>
-          )}
+          <div className="flex justify-between py-1.5 text-sm">
+            <span>Total descuentos por productos</span>
+            <span className="text-[#0a0]">
+              −{formatPrice(totalPromotionAmount)}
+            </span>
+          </div>
           <div className="flex justify-between py-1.5">
             <span>Costo de envío</span>
             <span>{formatPrice(0)}</span>
