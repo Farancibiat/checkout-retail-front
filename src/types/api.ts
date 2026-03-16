@@ -4,7 +4,8 @@
 
 export interface PromotionSummaryDto {
   type: string;
-  description: string;
+  minQuantity: number;
+  percent: number;
 }
 
 export interface ProductCatalogEntryDto {
@@ -34,9 +35,8 @@ export interface CartCheckoutRequest {
 
 export interface DiscountAppliedDto {
   type: string;
-  description: string;
   amount: number;
-  sku?: string;
+  percent?: number;
 }
 
 export interface PaymentConfirmationDto {
@@ -50,6 +50,7 @@ export interface CheckoutResponse {
   discounts: DiscountAppliedDto[];
   total: number;
   payment: PaymentConfirmationDto;
+  paymentMethod: string;
 }
 
 export type CartItem = CartItemRequest;

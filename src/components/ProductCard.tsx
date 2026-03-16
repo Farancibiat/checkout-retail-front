@@ -1,4 +1,5 @@
 import type { ProductCatalogEntryDto } from '../types/api';
+import { buildPromotionLabel } from '../utils/promotionLabel';
 
 interface ProductCardProps {
   product: ProductCatalogEntryDto;
@@ -45,7 +46,7 @@ export const ProductCard = ({ product, imageUrl, onAddToCart }: ProductCardProps
             className="m-0 text-xs text-[#555] min-h-0 overflow-hidden line-clamp-1"
             aria-label="Promociones"
           >
-            {product.promotions[0].description}
+            {buildPromotionLabel(product.promotions[0])}
           </p>
         )}
       </div>

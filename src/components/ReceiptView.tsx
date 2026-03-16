@@ -23,6 +23,8 @@ const formatPrice = (n: number): string =>
     maximumFractionDigits: 0,
   }).format(n);
 
+import { buildPromotionLabel } from '../utils/promotionLabel';
+
 export const ReceiptView = ({
   result,
   purchasedItems = [],
@@ -31,24 +33,15 @@ export const ReceiptView = ({
 }: ReceiptViewProps) => {
   const bySku = new Map(products.map((p) => [p.sku, p]));
   const discounts = Array.isArray(result.discounts) ? result.discounts : [];
-  const promotionDiscounts = discounts.filter(
+  const promotionEntry = discounts.find(
     (d) => (d.type || '').toUpperCase() === 'PROMOTION'
   );
-  const paymentDiscounts = discounts.filter(
+  const paymentEntry = discounts.find(
     (d) => (d.type || '').toUpperCase() === 'PAYMENT'
   );
-  const totalPromotionAmount = promotionDiscounts.reduce(
-    (sum, d) => sum + (Number(d.amount) || 0),
-    0
-  );
-
-  function getPromotionDiscountsForItem(sku: string) {
-    return promotionDiscounts.filter(
-      (d) =>
-        d.sku === sku ||
-        (!d.sku && (d.description || '').includes(`unidades de ${sku}`))
-    );
-  }
+  const totalPromotionAmount = promotionEntry
+    ? Number(promotionEntry.amount) || 0
+    : 0;
 
   return (
     <div className="w-full max-w-[520px] mx-auto p-6">
@@ -68,10 +61,8 @@ export const ReceiptView = ({
                 const product = bySku.get(item.sku);
                 if (!product) return null;
                 const priceVal = toPrice(product);
-                const itemPromotionDiscounts = getPromotionDiscountsForItem(
-                  item.sku
-                );
-                const hasDiscount = itemPromotionDiscounts.length > 0;
+                const productPromotions = product.promotions ?? [];
+                const hasDiscount = productPromotions.length > 0;
                 return (
                   <li
                     key={`${item.sku}-${index}`}
@@ -91,17 +82,11 @@ export const ReceiptView = ({
                         {formatPrice(priceVal * item.quantity)}
                       </span>
                     </div>
-                    {itemPromotionDiscounts.length > 0 && (
-                      <ul className="list-none p-0 m-0 pl-3 mt-0.5 text-sm">
-                        {itemPromotionDiscounts.map((d, i) => (
-                          <li
-                            key={`${item.sku}-${index}-${i}`}
-                            className="flex justify-between text-[#555]"
-                          >
-                            <span>{d.description}</span>
-                            <span className="text-[#0a0]">
-                              −{formatPrice(d.amount)}
-                            </span>
+                    {productPromotions.length > 0 && (
+                      <ul className="list-none p-0 m-0 pl-3 mt-0.5 text-sm text-[#555]">
+                        {productPromotions.map((promo, i) => (
+                          <li key={`${item.sku}-${index}-${i}`}>
+                            {buildPromotionLabel(promo)}
                           </li>
                         ))}
                       </ul>
@@ -133,15 +118,18 @@ export const ReceiptView = ({
             <span>Costo de envío</span>
             <span>{formatPrice(0)}</span>
           </div>
-          {paymentDiscounts.map((d, i) => (
-            <div
-              key={i}
-              className="flex justify-between py-1 text-sm text-[#555]"
-            >
-              <span>{d.description}</span>
-              <span className="text-[#0a0]">−{formatPrice(d.amount)}</span>
+          {paymentEntry && (
+            <div className="flex justify-between py-1 text-sm text-[#555]">
+              <span>
+                {paymentEntry.percent != null
+                  ? `${paymentEntry.percent}% descuento por pago con ${result.paymentMethod ?? 'pago'}`
+                  : `Descuento por pago con ${result.paymentMethod ?? 'pago'}`}
+              </span>
+              <span className="text-[#0a0]">
+                −{formatPrice(Number(paymentEntry.amount) || 0)}
+              </span>
             </div>
-          ))}
+          )}
           <div className="mt-3 pt-3 border-t-2 border-walmart-spark-yellow flex justify-between text-[1.15rem] text-walmart-bentonville-blue">
             <strong>Total</strong>
             <strong>{formatPrice(result.total)}</strong>
