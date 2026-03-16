@@ -91,11 +91,9 @@ export const ReceiptView = ({
                             {buildPromotionLabel(promo)}
                           </li>
                         ))}
-                        {lineDiscount > 0 && (
-                          <li className="text-[#0a0] font-medium mt-0.5">
-                            Descuento: −{formatPrice(lineDiscount)}
-                          </li>
-                        )}
+                        <li className="text-[#0a0] font-medium mt-0.5">
+                          Descuento: −{formatPrice(lineDiscount)}
+                        </li>
                       </ul>
                     )}
                   </li>
