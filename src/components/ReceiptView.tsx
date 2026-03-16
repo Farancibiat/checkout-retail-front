@@ -23,6 +23,7 @@ const formatPrice = (n: number): string =>
     maximumFractionDigits: 0,
   }).format(n);
 
+import { getLinePromotionDiscount } from '../utils/cartDiscounts';
 import { buildPromotionLabel } from '../utils/promotionLabel';
 
 export const ReceiptView = ({
@@ -62,7 +63,8 @@ export const ReceiptView = ({
                 if (!product) return null;
                 const priceVal = toPrice(product);
                 const productPromotions = product.promotions ?? [];
-                const hasDiscount = productPromotions.length > 0;
+                const lineDiscount = getLinePromotionDiscount(item, product);
+                const hasDiscount = lineDiscount > 0;
                 return (
                   <li
                     key={`${item.sku}-${index}`}
@@ -89,6 +91,11 @@ export const ReceiptView = ({
                             {buildPromotionLabel(promo)}
                           </li>
                         ))}
+                        {lineDiscount > 0 && (
+                          <li className="text-[#0a0] font-medium mt-0.5">
+                            Descuento: −{formatPrice(lineDiscount)}
+                          </li>
+                        )}
                       </ul>
                     )}
                   </li>

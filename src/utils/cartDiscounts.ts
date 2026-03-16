@@ -36,3 +36,27 @@ export function getTotalPromotionDiscount(
   }
   return Math.round(total * 100) / 100;
 }
+
+/**
+ * Calcula el monto de descuento por promociones para una sola línea (ítem + producto).
+ * Misma lógica: quantity_discount con quantity >= minQuantity → lineTotal * percent / 100.
+ */
+export function getLinePromotionDiscount(
+  item: CartItem,
+  product: ProductCatalogEntryDto
+): number {
+  const promotions: PromotionSummaryDto[] = product.promotions ?? [];
+  const lineTotal = toPrice(product) * item.quantity;
+  let total = 0;
+  for (const promo of promotions) {
+    if (
+      promo.type === QUANTITY_DISCOUNT_TYPE &&
+      promo.minQuantity != null &&
+      item.quantity >= promo.minQuantity
+    ) {
+      const pct = Number(promo.percent) || 0;
+      total += lineTotal * (pct / 100);
+    }
+  }
+  return Math.round(total * 100) / 100;
+}
