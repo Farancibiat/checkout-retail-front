@@ -1,3 +1,4 @@
+import { getTotalPromotionDiscount } from '../utils/cartDiscounts';
 import type { CartItem, ProductCatalogEntryDto } from '../types/api';
 
 interface CartProps {
@@ -33,6 +34,8 @@ export const Cart = ({
   const bySku = new Map(products.map((p) => [p.sku, p]));
   const productList = products;
   const skuToIndex = new Map(productList.map((p, i) => [p.sku, i]));
+  const promotionDiscount = getTotalPromotionDiscount(items, products);
+  const total = subtotal - promotionDiscount;
 
   if (items.length === 0) {
     return (
@@ -111,8 +114,23 @@ export const Cart = ({
           );
         })}
       </ul>
-      <div className="mt-4 pt-4 border-t-2 border-walmart-true-blue text-lg text-walmart-bentonville-blue">
-        <strong>Subtotal:</strong> {formatPrice(subtotal)}
+      <div className="mt-4 pt-4 border-t-2 border-walmart-true-blue space-y-1.5 text-lg text-walmart-bentonville-blue">
+        <div className="flex justify-between">
+          <strong>Subtotal</strong>
+          <span>{formatPrice(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>Descuento por productos</span>
+          <span className="text-[#0a0]">−{formatPrice(promotionDiscount)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>Costo de envío</span>
+          <span>{formatPrice(0)}</span>
+        </div>
+        <div className="flex justify-between pt-2 border-t border-walmart-true-blue font-semibold">
+          <strong>Total</strong>
+          <span>{formatPrice(total)}</span>
+        </div>
       </div>
     </div>
   );

@@ -106,14 +106,12 @@ export const ReceiptView = ({
             <span>Subtotal</span>
             <span>{formatPrice(result.subtotal)}</span>
           </div>
-          {totalPromotionAmount > 0 && (
-            <div className="flex justify-between py-1.5 text-sm">
-              <span>Total descuentos por productos</span>
-              <span className="text-[#0a0]">
-                −{formatPrice(totalPromotionAmount)}
-              </span>
-            </div>
-          )}
+          <div className="flex justify-between py-1.5 text-sm">
+            <span>Total descuentos por productos</span>
+            <span className="text-[#0a0]">
+              −{formatPrice(totalPromotionAmount)}
+            </span>
+          </div>
           <div className="flex justify-between py-1.5">
             <span>Costo de envío</span>
             <span>{formatPrice(0)}</span>

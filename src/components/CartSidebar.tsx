@@ -1,3 +1,4 @@
+import { getTotalPromotionDiscount } from '../utils/cartDiscounts';
 import type { CartItem, ProductCatalogEntryDto } from '../types/api';
 
 interface CartSidebarProps {
@@ -25,6 +26,8 @@ export const CartSidebar = ({
   subtotal,
 }: CartSidebarProps) => {
   const bySku = new Map(products.map((p) => [p.sku, p]));
+  const promotionDiscount = getTotalPromotionDiscount(items, products);
+  const total = subtotal - promotionDiscount;
 
   return (
     <aside className="bg-[#f8f9fa] border border-walmart-secondary-blue rounded-lg p-5 min-w-[260px]">
@@ -52,9 +55,23 @@ export const CartSidebar = ({
           );
         })}
       </ul>
-      <div className="mt-4 pt-4 border-t-2 border-walmart-true-blue flex justify-between items-center text-base text-walmart-bentonville-blue">
-        <strong>Subtotal</strong>
-        <span>{formatPrice(subtotal)}</span>
+      <div className="mt-4 pt-4 border-t-2 border-walmart-true-blue space-y-1.5 text-base text-walmart-bentonville-blue">
+        <div className="flex justify-between">
+          <strong>Subtotal</strong>
+          <span>{formatPrice(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>Descuento por productos</span>
+          <span className="text-[#0a0]">−{formatPrice(promotionDiscount)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>Costo de envío</span>
+          <span>{formatPrice(0)}</span>
+        </div>
+        <div className="flex justify-between pt-2 border-t border-walmart-true-blue font-semibold">
+          <strong>Total</strong>
+          <span>{formatPrice(total)}</span>
+        </div>
       </div>
     </aside>
   );
